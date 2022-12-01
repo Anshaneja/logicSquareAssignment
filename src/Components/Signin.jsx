@@ -9,6 +9,10 @@ function MyVerticallyCenteredModal(props) {
     const oldData = props.oldData;
     const [data, setData] = useState({})
 
+    useEffect(()=> {
+        setData({});
+    },[oldData])
+
     const handleChange = (e)=>{
         setData({...data,[e.target.name]:e.target.value})
     }
@@ -80,7 +84,108 @@ function MyVerticallyCenteredModal(props) {
                             <Col>
                                 <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
                                     <Form.Label>Joining Date</Form.Label>
-                                    <Form.Control type="date" placeholder="Enter" name='Joining Date' onChange={handleChange} />
+                                    <Form.Control type="date" placeholder="Enter" name='JoiningDate' onChange={handleChange} />
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                    </Container>
+                </Form>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="outline-danger" onClick={props.onHide}>Cancel</Button>
+                <Button variant='success' onClick={storeData} >Save</Button>
+            </Modal.Footer>
+        </Modal>
+    );
+}
+
+const EditEmpModal = (props)=> {
+
+    const empData = props.empData;
+    const oldData = props.oldData;
+    const empId = props.empId; 
+    const [data,setData] = useState(oldData.filter((item)=> item.id === empId  )[0] ? oldData.filter((item)=> item.id === empId  )[0] : {});
+    
+    console.log(empId);
+    console.log(data);
+    useEffect(()=>{
+        setData(oldData.filter((item)=> item.id === empId  )[0] ? oldData.filter((item)=> item.id === empId  )[0] : {})
+    },[empId,oldData])
+
+    const handleChange = (e)=>{
+        setData({...data,[e.target.name]:e.target.value})
+    }
+
+    const storeData = () => {
+        props.onHide()
+        let newData = oldData.map( (item)=> {
+            if( item.id === empId ){
+                return data
+            }
+            else return item
+        })
+        empData(newData)
+        localStorage.setItem('LSData', JSON.stringify(newData))
+    }
+
+    return (
+        <Modal
+            {...props}
+            size="lg"
+            aria-labelledby="contained-modal-title-vcenter"
+            centered
+        >
+            <Modal.Header closeButton>
+                <Modal.Title id="contained-modal-title-vcenter">
+                    Add Employee
+                </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form>
+                    <Container>
+                        <Row>
+                            <Col>
+                                <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
+                                    <Form.Label>Name</Form.Label>
+                                    <Form.Control type="text" placeholder="Enter" name='Name' value={data.Name? data.Name : ""} onChange={handleChange}  />
+                                </Form.Group>
+                            </Col>
+                            <Col>
+                                <Form.Group className="mb-3" controlId="exampleForm.ControlTextarea1">
+                                    <Form.Label>Gender</Form.Label>
+                                    <Form.Select aria-label="Default select example" name='Gender' value={data.Gender? data.Gender : ""} onChange={handleChange} >
+                                        <option>Select</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </Form.Select>
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col>
+                                <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
+                                    <Form.Label>Age</Form.Label>
+                                    <Form.Control type="Number" placeholder="Enter" name='Age' value={data.Age? data.Age : ""} onChange={handleChange}  />
+                                </Form.Group>
+                            </Col>
+                            <Col>
+                                <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
+                                    <Form.Label>Designation</Form.Label>
+                                    <Form.Control type="text" placeholder="Enter" name='Designation' value={data.Designation? data.Designation : ""} onChange={handleChange}  />
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col>
+                                <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
+                                    <Form.Label>Department</Form.Label>
+                                    <Form.Control type="text" placeholder="Enter" name='Department' value={data.Department? data.Department : ""} onChange={handleChange} />
+                                </Form.Group>
+                            </Col>
+                            <Col>
+                                <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
+                                    <Form.Label>Joining Date</Form.Label>
+                                    <Form.Control type="date" placeholder="Enter" name='JoiningDate' value={data.JoiningDate? data.JoiningDate : ""} onChange={handleChange} />
                                 </Form.Group>
                             </Col>
                         </Row>
@@ -97,21 +202,28 @@ function MyVerticallyCenteredModal(props) {
 
 
 
-
 function Signin() {
     const [modalShow, setModalShow] = useState(false);
+    const [editModalShow, setEditModalShow] = useState(false);
     const [Available, setAvailable] = useState(10);
     const [Total, setTotal] = useState(10);
     const [employeeData, setEmployeeData] = useState([]);
+    const [editEmpId , setEditEmpId] = useState(null);
 
 
     useEffect(() => {
         const getData = () => {
-            let data=JSON.parse(localStorage.getItem('LSData'))
+            let data = [];
+            if(localStorage.getItem('LSData') === null){
+                localStorage.setItem('LSData', employeeData);
+            }
+            else{
+                data=JSON.parse(localStorage.getItem('LSData'));
+            }
             let x=0
             setTotal(data.length)
             for(let i=0; i<data.length; i++) {
-                if (data[i].Available==true){
+                if (data[i].Available===true){
                     x+=1
                 }
             }   
@@ -143,6 +255,11 @@ function Signin() {
             setEmployeeData(employeeData.map(item=>item.id===e.target.id ? {...item,Available:true}:item))
             setAvailable(prev=>prev+1)
         }
+    }
+
+    const handleEdit = (id) => {
+        setEditEmpId(id);
+        setEditModalShow(true);
     }
     return (
         <>
@@ -183,6 +300,13 @@ function Signin() {
                     setTotal={setTotal}
                     onHide={() => setModalShow(false)}
                 />
+                <EditEmpModal
+                    empData={setEmployeeData}
+                    oldData={employeeData}
+                    show={editModalShow}
+                    empId={editEmpId}
+                    onHide={() => setEditModalShow(false)}
+                />
             </div>
 
 
@@ -204,7 +328,7 @@ function Signin() {
                                     <td>{each.Department}</td>
                                     <td><Form.Check aria-label="option 1" id={each.id} value={each.Available} checked={each.Available} onClick={changeAvailable} /></td>
                                     <td>
-                                        <Button variant="outline-primary" className='mx-2' > <FaEdit />Edit</Button>
+                                        <Button variant="outline-primary" className='mx-2' onClick={()=> handleEdit(each.id)} > <FaEdit />Edit</Button>
                                         <Button variant="outline-danger" id={each.id} onClick={deleteEmployee}> <BsTrash />Delete</Button>
                                     </td>
                                 </tr>
